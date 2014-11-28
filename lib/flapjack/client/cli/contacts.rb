@@ -45,10 +45,10 @@ module Flapjack; module Client; module Cli
       begin
         contacts = JSON.parse(content)
       rescue
-        abort("Could not parse contacts. Ensure contacts are formatted in valid JSON.")  
+        abort("Could not parse contacts. Ensure contacts are formatted in valid JSON.")
       end
 
-      if api.connection.create_contacts!(contacts)
+      if api.connection.create_contacts(contacts)
         puts "Created contacts."
       else
         raise "Couldn't create contacts " + $!.inspect

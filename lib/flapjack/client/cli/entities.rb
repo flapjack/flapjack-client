@@ -45,10 +45,10 @@ module Flapjack; module Client; module Cli
       begin
         entities = JSON.parse(content)
       rescue
-        abort("Could not parse entities. Ensure entities are formatted in valid JSON.")  
+        abort("Could not parse entities. Ensure entities are formatted in valid JSON.")
       end
 
-      if api.connection.create_entities!(entities)
+      if api.connection.create_entities(entities)
         puts "Created entities."
       else
         raise "Couldn't create entities " + $!.inspect

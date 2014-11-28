@@ -6,21 +6,30 @@ module Flapjack; module Client
 
     def Util.enable_maintenance(api, entity_and_check, options)
       entity, checks = entity_and_check.split(':')
+      entities = Flapjack::Diner.entities_matching(/#{entity}/)
+      raise "Failed to find entity with #{entity}" if entities.empty?
+      entity_id = entities.first[:id]
+
       if checks.nil?
-        if api.connection.bulk_create_scheduled_maintenance!(
-          :entity     => [entity],
+        maintainence = {
           :start_time => options['start'],
           :duration   => options['duration'],
           :summary    => options['summary'])
+        }
+        if api.connection.create_scheduled_maintenances_entities(entity_id, maintenance)
           puts "Set maintenance mode for #{entity}:#{checks} starting at #{options['start']} for #{options['duration']} seconds."
         else
           raise "Couldn't set maintenance mode " + $!.inspect
         end
       elsif checks.split(',').length == 1
-        if api.connection.create_scheduled_maintenance!(entity, checks,
+        maintainence = {
           :start_time => options['start'],
           :duration   => options['duration'],
           :summary    => options['summary'])
+        }
+        # FIXME: how do these join together?
+        check_ids = checks.map { |c| "#{entity}:#{c}" }.join(', ')
+        if api.connection.create_scheduled_maintenances_checks(check_ids, maintenance)
           puts "Set maintenance mode for #{entity}:#{checks} starting at #{options['start']} for #{options['duration']} seconds."
         else
           raise "Couldn't set maintenance mode " + $!.inspect
@@ -216,7 +225,7 @@ module Flapjack; module Client
        raise "Could not find contact with name #{name}."
      end
      contact_ids.first
-    end   
+    end
 
     def Util.get_contact_id(api, options)
       if options[:contact_name]
@@ -262,7 +271,7 @@ module Flapjack; module Client
     def Util.get_default_notification_rules(api, rules)
       default_rules = []
       rules.each do |rule|
-        if rule['tags'] == [] and rule['entities'] == [] and 
+        if rule['tags'] == [] and rule['entities'] == [] and
           rule['warning_media'] == ["email", "sms", "jabber", "pagerduty"] and
           rule['critical_media'] == ["email", "sms", "jabber", "pagerduty"] and
           rule['unknown_blackhole'] == false and rule['warning_blackhole'] == false and
@@ -309,17 +318,17 @@ module Flapjack; module Client
         default_rules = Util.get_default_notification_rules(api, rules)
         if default_rules.count == 1
           default_rules.each do |default_rule|
-            Util.update_notification_rule(api, default_rule['id'], blackhole_rule)  
+            Util.update_notification_rule(api, default_rule['id'], blackhole_rule)
           end
         elsif default_rules.count > 1
           default_rules.each do |default_rule|
-            Util.delete_notification_rule(api, default_rules.first['id'])  
+            Util.delete_notification_rule(api, default_rules.first['id'])
           end
         elsif default_rules.count == 0
           break
         end
       end
-            
+
     end
 
     def Util.update_notification_rule(api, rule_id, rule)
