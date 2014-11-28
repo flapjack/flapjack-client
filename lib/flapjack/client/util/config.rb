@@ -6,7 +6,7 @@ module Flapjack; module Client; module Util
       if rc_file
         @rc_file = rc_file
       else
-        @rc_file = ENV['HOME'] + '/.flapjack.rc'
+        @rc_file = File.join(ENV['HOME'], '.flapjack.rc')
       end
       @uri = uri
       @logfile = logfile
